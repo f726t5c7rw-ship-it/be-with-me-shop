@@ -1,1 +1,150 @@
-<!DOCTYPE html></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BE WITH ME - Luxury Shop</title>
+<style>
+body{margin:0;background:#090909;color:white;font-family:Arial,sans-serif}
+header{text-align:center;padding:25px;border-bottom:1px solid #d4af37}
+.logo{color:#d4af37;font-size:27px;font-weight:bold;letter-spacing:4px}
+.hero{margin:15px;padding:25px;background:linear-gradient(135deg,#392d10,#111);border-radius:12px}
+h2{color:#d4af37}
+button,select{padding:12px;border:0;border-radius:6px;cursor:pointer}
+button{background:#d4af37;color:#090909;font-weight:bold}
+select{background:#222;color:white}
+.products{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:15px}
+.card{background:#191919;border:1px solid #333;border-radius:10px;padding:12px}
+.picture{font-size:55px;text-align:center;padding:15px;background:#242016;border-radius:8px}
+.price{color:#d4af37;font-weight:bold}
+.card button{width:100%}
+#cart{margin:15px;padding:15px;border:1px solid #d4af37;border-radius:10px}
+input,textarea{width:100%;padding:12px;margin:7px 0;box-sizing:border-box;background:#222;color:white;border:1px solid #555;border-radius:6px}
+footer{text-align:center;color:#aaa;padding:25px}
+</style>
+</head>
+<body>
+<header>
+<div class="logo">BE WITH ME</div>
+<p>LUXURY • STYLE • ELEGANCE</p>
+</header>
+
+<section class="hero">
+<p>WELCOME TO OUR STORE</p>
+<h2 style="font-size:32px">Your Style.<br>Your Choice.</h2>
+<p>Discover watches and fashion at BE WITH ME.</p>
+<button onclick="document.getElementById('shop').scrollIntoView()">SHOP NOW</button>
+</section>
+
+<div style="padding:15px">
+<label for="currency">Currency: </label>
+<select id="currency" onchange="render()">
+<option value="MVR">MVR</option>
+<option value="USD">USD</option>
+</select>
+</div>
+
+<h2 id="shop" style="padding-left:15px">OUR COLLECTION</h2>
+<div class="products" id="products"></div>
+
+<section id="cart">
+<h2>YOUR SHOPPING BAG</h2>
+<div id="items">Your bag is empty.</div>
+<p id="total">Total: MVR 0.00</p>
+<h2>CHECKOUT</h2>
+<input id="name" placeholder="Your full name">
+<input id="phone" placeholder="Phone number">
+<textarea id="address" placeholder="Delivery address"></textarea>
+<select id="payment" style="width:100%">
+<option>Cash on delivery</option>
+<option>Bank transfer</option>
+</select>
+<button onclick="placeOrder()">PREPARE ORDER</button>
+<p id="result"></p>
+</section>
+
+<footer>BE WITH ME © 2026<br>Luxury Shopping • Maldives</footer>
+
+<script>
+const rate=15.42;
+const products=[
+{id:1,name:"Classic Watch",category:"Watches",price:85,icon:"⌚"},
+{id:2,name:"Gold Style Watch",category:"Watches",price:120,icon:"⌚"},
+{id:3,name:"Luxury Watch",category:"Watches",price:65,icon:"⌚"},
+{id:4,name:"Black T-Shirt",category:"Clothing",price:25,icon:"👕"},
+{id:5,name:"Fashion Shirt",category:"Clothing",price:35,icon:"👔"},
+{id:6,name:"Casual Clothing",category:"Clothing",price:40,icon:"👕"}
+];
+let bag={};
+
+function money(price){
+let currency=document.getElementById("currency").value;
+let value=currency==="MVR"?price*rate:price;
+return currency+" "+value.toFixed(2);
+}
+
+function render(){
+document.getElementById("products").innerHTML=products.map(p=>`
+<div class="card">
+<div class="picture">${p.icon}</div>
+<p style="color:#aaa">${p.category}</p>
+<h3>${p.name}</h3>
+<p class="price">${money(p.price)}</p>
+<button onclick="add(${p.id})">ADD TO BAG</button>
+</div>`).join("");
+
+let entries=Object.entries(bag);
+document.getElementById("items").innerHTML=entries.length?
+entries.map(([id,q])=>{
+let p=products.find(x=>x.id==id);
+return `<p>${p.name} × ${q} — ${money(p.price*q)}
+<button onclick="change(${id},-1)">−</button>
+<button onclick="change(${id},1)">+</button></p>`;
+}).join(""):"Your bag is empty.";
+
+let total=entries.reduce((sum,[id,q])=>
+sum+products.find(p=>p.id==id).price*q,0);
+
+document.getElementById("total").textContent="Total: "+money(total);
+}
+
+function add(id){bag[id]=(bag[id]||0)+1;render()}
+function change(id,n){bag[id]+=n;if(bag[id]<=0)delete bag[id];render()}
+
+function placeOrder(){
+if(!Object.keys(bag).length){alert("Please add a product first.");return}
+let name=document.getElementById("name").value.trim();
+let phone=document.getElementById("phone").value.trim();
+let address=document.getElementById("address").value.trim();
+
+if(!name||!phone||!address){alert("Please enter your name, phone and address.");return}
+
+let lines=Object.entries(bag).map(([id,q])=>{
+let p=products.find(x=>x.id==id);
+return p.name+" x "+q+" = "+money(p.price*q);
+});
+
+let total=Object.entries(bag).reduce((sum,[id,q])=>
+sum+products.find(p=>p.id==id).price*q,0);
+
+let order="BE WITH ME - ORDER REQUEST\n"+
+"Name: "+name+"\nPhone: "+phone+
+"\nAddress: "+address+
+"\nPayment: "+document.getElementById("payment").value+
+"\n\n"+lines.join("\n")+"\n\nTOTAL: "+money(total);
+
+let url="https://t.me/share/url?url="+
+encodeURIComponent("https://t.me/bewithmeshopbot")+
+"&text="+encodeURIComponent(order);
+
+document.getElementById("result").innerHTML=
+"Your order summary is ready. "+
+'<br><br><button onclick="window.open(\''+
+url+'\',\'_blank\')">SHARE ORDER ON TELEGRAM</button>'+
+'<p style="color:#aaa;font-size:12px">This opens Telegram to share your order. Your order is not confirmed until the shop receives and accepts it.</p>';
+}
+
+render();
+</script>
+</body>
+</html>
